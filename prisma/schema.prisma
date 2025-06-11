@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Country {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  flagUrl   String?
+  timezone  String
+  seasons   Season[]
+  categories Category[]
+  createdAt DateTime @default(now())
+}
+
+model Season {
+  id        String   @id @default(cuid())
+  name      String   // e.g., Summer, Winter
+  monthFrom Int      // 1 to 12
+  monthTo   Int      // 1 to 12
+  countryId String
+  categories Category[]
+  country   Country  @relation(fields: [countryId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   // e.g., Casual, Formal
+  gender    Gender   // enum: MALE, FEMALE, KIDS
+  countryId String
+  seasonId  String
+  products Product[]
+  country   Country  @relation(fields: [countryId], references: [id])
+  season    Season   @relation(fields: [seasonId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  KIDS
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  imageUrl      String
+  price         Float
+  availableSizes String[] // ["S", "M", "L", "XL"]
+  gender        Gender
+  categoryId    String
+  orderItems OrderItem[]
+  reviews Review[]
+  wishlist Wishlist[]
+  useractivity UserActivity[]
+  category      Category  @relation(fields: [categoryId], references: [id])
+  deliveryType  DeliveryType @default(HOME)
+  createdAt     DateTime @default(now())
+  
+}
+
+enum DeliveryType {
+  HOME
+  ON_ARRIVAL
+}
+
+model Order {
+  id              String       @id @default(cuid())
+  userId          String       // Placeholder for user system
+  deliveryType    DeliveryType
+  shippingAddress String?      // Required for HOME
+  arrivalCountry  String?      // Required for ON_ARRIVAL
+  arrivalAirport  String?      // Optional
+  orderItems      OrderItem[]
+  user            User @relation(fields: [userId], references: [id])
+  createdAt       DateTime     @default(now())
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int      @default(1)
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  name      String?
+  role      UserRole  @default(TRAVELER)
+  orders    Order[]
+  reviews   Review[]
+    wishlist Wishlist[]
+  useractivity UserActivity[]
+  createdAt DateTime  @default(now())
+}
+
+
+enum UserRole {
+  TRAVELER
+  INFLUENCER
+  ADMIN
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      @default(5) // From 1 to 5
+  comment   String?
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, productId]) // Prevent duplicates
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  viewedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
