@@ -3,13 +3,33 @@ const prisma = new PrismaClient();
 
 exports.createOrder = async (req, res) => {
   const {
-    userId = "demo-user", // Replace later with actual auth system
+    userId, 
     deliveryType,
     shippingAddress,
     arrivalCountry,
     arrivalAirport,
     items // [{ productId, quantity }]
   } = req.body;
+  
+const productIds = items.map(item => item.productId);
+const products = await prisma.product.findMany({
+  where: { id: { in: productIds } }
+});
+
+let totalPrice = 0;
+const orderItemsData = items.map(item => {
+  const product = products.find(p => p.id === item.productId);
+  if (!product) throw new Error(`Product ${item.productId} not found`);
+  
+  const quantity = item.quantity || 1;
+  totalPrice += product.price * quantity;
+  
+  return {
+    productId: item.productId,
+    quantity,
+    price: product.price
+  };
+});
 
   try {
     const order = await prisma.order.create({
