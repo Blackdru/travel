@@ -22,10 +22,10 @@ exports.getCountryByCode = async (req, res) => {
 };
 
 exports.addCountry = async (req, res) => {
-  const { name, code, flagUrl, timezone } = req.body;
+  const { name, code, flagUrl, capital, timezone } = req.body;
   try {
     const newCountry = await prisma.country.create({
-      data: { name, code, flagUrl, timezone }
+      data: { name, code, flagUrl, capital, timezone }
     });
     res.status(201).json(newCountry);
   } catch (error) {

@@ -18,14 +18,49 @@ exports.createSeason = async (req, res) => {
 exports.getSeasonsByCountry = async (req, res) => {
   const { countryId } = req.params;
   try {
-    const seasons = await prisma.season.findMany({
-      where: { countryId }
-    });
-    res.json(seasons);
+    const seasons = await prisma.season.findMany({ where: { countryId } });
+
+    // Get today's date
+    const today = new Date();
+    const currentMonth = today.toLocaleString('en', { month: 'long' });
+
+    // Define a helper to convert a month name to a number (Jan = 0, Feb = 1 etc.)
+    const months = [
+      "January", "February", "March", "April",
+      "May", "June", "July", "August",
+      "September", "October", "November", "December"
+    ];
+
+    const currentIdx = months.indexOf(currentMonth);
+
+    // Determine which season covers this currentIdx
+    let currentSeason = null;
+    for (const season of seasons) {
+      const startIdx = months.indexOf(season.start);
+      const endIdx = months.indexOf(season.end);
+
+      // Handle cases where the season might wrap past December
+      if (startIdx <= endIdx) {
+        if (currentIdx >= startIdx && currentIdx <= endIdx) {
+          currentSeason = season;
+          break;
+        }
+      } else { 
+        // Season crosses December (like Winter in many hemispheres, December to February).
+        if (currentIdx >= startIdx || currentIdx <= endIdx) {
+          currentSeason = season;
+          break;
+        }
+      }
+    }
+
+    res.json({ seasons, currentSeason });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch seasons' });
   }
 };
+
+
 
 // Get current season by country
 exports.getCurrentSeason = async (req, res) => {

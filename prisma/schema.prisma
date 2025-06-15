@@ -14,20 +14,34 @@ model Country {
   code      String   @unique
   flagUrl   String?
   timezone  String
+  capital  String
   seasons   Season[]
   categories Category[]
   createdAt DateTime @default(now())
 }
 
 model Season {
-  id        String   @id @default(cuid())
-  name      String   // e.g., Summer, Winter
-  monthFrom Int      // 1 to 12
-  monthTo   Int      // 1 to 12
+  id        String   @id @default(cuid()) 
   countryId String
+  season   SeasonType
+  start    String
+  end      String
   categories Category[]
-  country   Country  @relation(fields: [countryId], references: [id])
-  createdAt DateTime @default(now())
+  country Country @relation(fields: [countryId], references: [id])
+
+  createdAt DateTime @default(now()) 
+}
+
+enum SeasonType {
+  Spring
+  Summer
+  Autumn
+  Winter
+  Mansoon
+  Rainy
+  Dry
+  Fall
+  PostMansoon
 }
 
 model Category {
