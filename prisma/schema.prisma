@@ -16,6 +16,7 @@ model Country {
   timezone  String
   capital  String
   seasons   Season[]
+  product  Product[]
   categories Category[]
   createdAt DateTime @default(now())
 }
@@ -26,6 +27,7 @@ model Season {
   season   SeasonType
   start    String
   end      String
+  products Product[]
   categories Category[]
   country Country @relation(fields: [countryId], references: [id])
 
@@ -57,9 +59,10 @@ model Category {
 }
 
 enum Gender {
-  MALE
-  FEMALE
-  KIDS
+  Male
+  Female
+  Kids
+  Unisex
 }
 
 model Product {
@@ -71,6 +74,9 @@ model Product {
   availableSizes String[] // ["S", "M", "L", "XL"]
   gender        Gender
   categoryId    String
+  type          String?
+  countries     Country[]
+  seasons       Season[]
   orderItems OrderItem[]
   reviews Review[]
   wishlist Wishlist[]
@@ -124,7 +130,7 @@ model User {
 
 enum UserRole {
   TRAVELER
-  INFLUENCER
+  USER
   ADMIN
 }
 

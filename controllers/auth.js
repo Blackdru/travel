@@ -38,7 +38,7 @@ exports.register = async (req, res) => {
         email,
         password: hashedPassword,
         name,
-        role: role || 'USER', // Default to USER role if not specified
+        role: role || 'TRAVELER', // Default to USER role if not specified
       },
     });
 

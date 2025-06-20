@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Country Seasons</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    color: #333;
+}
+
+.dropdown {
+    position: relative;
+    width: 250px;
+    margin-bottom: 20px;
+}
+
+.dropdown .selected {
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.dropdown .options {
+    display: none;
+    position: absolute;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-top: 5px;
+    max-height: 300px;
+    overflow-y: scroll;
+    z-index: 100;
+}
+
+.dropdown.active .options {
+    display: block;
+}
+
+.dropdown .options .option {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.dropdown .options .option:hover {
+    background: #f5f5f5;
+}
+
+.dropdown img {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid #ff9900;
+}
+.season-box {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    position: relative;
+    background: #f9f9f9;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.season-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px #0003;
+}
+.season-box.active {
+    border: 2px solid #26ea44;
+    background: #fff7e6;
+}
+.season-box.active::before {
+    content:'Current Season';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: #26ea44;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+.season-box img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #26ea44;
+}
+.season-details {
+    flex: 1;
+}
+.season-name {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.season-period {
+    color: #666;
+    font-size: 0.9em;
+}
+</style>
+</head>
+<body>
+<h1>Country Seasons</h1>
+
+<div class="dropdown" id="dropdown">
+    <div class="selected"><span>Select Country</span></div>
+    <div class="options" id="options"></div>
+</div>
+
+<h2 id="countryHeader"></h2>
+<img id="countryFlag" src="" alt="" style="width:200px;height:100px;margin-bottom:20px;border-radius:10px;border: 3px solid #4d4d4d;display:none;">
+
+<div id="seasonsContainer"></div>
+
+<script>
+    let countries = [];
+
+    async function loadCountries(){
+        const res = await fetch('http://localhost:3000/countries'); 
+        countries = await res.json();
+
+        // Sort by name
+        countries.sort((a, b) => b.name.localeCompare(a.name));
+
+        const options = document.getElementById('options');
+        options.innerHTML = '';
+        countries?.forEach(country => {
+            const option = document.createElement('div');
+            option.classList.add('option');
+            option.innerHTML = `
+                <img src="${country.flagUrl}" alt="${country.name}">
+                <span>${country.name}</span>`;
+            option.addEventListener('click', () => selectCountry(country)); 
+            options.prepend(option);
+        });
+    }
+    
+
+    function selectCountry(country) {
+        document.querySelector('.selected').innerHTML = `
+            <img src="${country.flagUrl}" alt="${country.name}">
+            <span>${country.name}</span>`;
+        document.querySelector('.dropdown').classList.remove('active');    
+
+        loadSeasons(country);
+    }
+    
+
+    async function loadSeasons(country) {
+        document.getElementById('countryHeader').innerHTML = country?.name || '';
+        if (country?.flagUrl) {
+            document.getElementById('countryFlag').src = country.flagUrl;
+            document.getElementById('countryFlag').style.display = 'block';
+        } else {
+            document.getElementById('countryFlag').style.display = 'none';
+        }
+        
+        const res = await fetch('http://localhost:3000/seasons/' + country.id);
+        const { seasons, currentSeason } = await res.json();
+
+        const container = document.getElementById('seasonsContainer');
+        container.innerHTML = '';
+        seasons?.forEach(s => {
+            const box = document.createElement('div');
+            box.classList.add('season-box');
+            if (currentSeason && currentSeason.id === s.id) {
+                box.classList.add('active'); // Highlight current
+            }
+            box.innerHTML = `
+                <img src="${s.image || 'https://via.placeholder.com/60'}" alt="${s.season}">
+                <div>
+                    <div class="season-name">${s.season}</div>
+                    <div class="season-period">${s.start} - ${s.end}</div>
+                </div>`;
+            container.prepend(box);
+        });
+    }
+    
+
+    document.querySelector('.selected').addEventListener('click', () => {
+        document.querySelector('.dropdown').classList.toggle('active');  
+    });
+
+    // Initial load
+    loadCountries();
+
+    // Close on clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) {
+            document.querySelector('.dropdown').classList.remove('active'); 
+        }
+    });
+
+</script>
+
+</body>
+</html>
