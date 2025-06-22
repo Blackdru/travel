@@ -21,6 +21,7 @@ app.use('/trending', require('./routes/trending'));
 app.use('/recommendations', require('./routes/recommendations'));
 app.use('/admin', require('./routes/admin'));
 app.use('/auth', require('./routes/auth'));
+app.use('/user', require('./routes/user'));
 app.use('/external', require("./routes/external"));
 
 
