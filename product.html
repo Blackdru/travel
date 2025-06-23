@@ -1,113 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Products</title>
-<style>
-body {
-    margin: 20px;
-    font-family: Arial, sans-serif;
-    color: #333;
-    background: #f9f9f9;
-}
-
-h1 {
-    color: #ff9900;
-    margin-bottom: 20px;
-    text-align: center;
-    font-size: 2em;
-    font-weight: bold;
-}
-
-.container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-    gap: 20px;
-}
-
-.card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 5px #0003;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 10px #0005;
-}
-
-.card img {
-    width: 160px;
-    height: 160px;
-    object-fit: cover;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    border: 3px solid #ff9900;
-}
-
-.card h2 {
-    font-size: 1.1em;
-    margin-bottom: 10px;
-    color: #ff9900;
-}
-
-.card p {
-    font-size: 0.9em;
-    color: #666;
-    margin-bottom: 10px;
-}
-
-.card .price {
-    color: #ff9900;
-    font-weight: bold;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-}
-
-.card .rating {
-    color: #ff9900;
-    margin-bottom: 10px;
-    font-size: 0.9em;
-}
-
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Product</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f7f7f7;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    input[type="submit"] {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    input[type="submit"]:hover {
+      background-color: #218838;
+    }
+    .checkbox-group label {
+      display: inline-block;
+      margin-right: 10px;
+    }
+  </style>
 </head>
 <body>
-<h1>Product Listing</h1>
+  <h1>Add Product</h1>
+  <form id="productForm">
+    <label>Name: <input type="text" name="name" required /></label>
+    <label>Description: <input type="text" name="description" required /></label>
+    <label>Image URL: <input type="text" name="imageUrl" required /></label>
+    <label>Price: <input type="number" name="price" step="0.01" required /></label>
 
-<div class="container" id="productContainer">
-    <!-- products will be injected here -->
-</div>
+    <label>Gender:</label>
+    <select name="gender">
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Kids">Kids</option>
+      <option value="Unisex">Unisex</option>
+    </select>
 
-<script>
-    async function fetchProducts(){
-        try {
-            const res = await fetch('http://localhost:3000/external/products');
-            const products = await res.json();
+    <label>Available Sizes:</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="availableSizes" value="S" />S</label>
+      <label><input type="checkbox" name="availableSizes" value="M" />M</label>
+      <label><input type="checkbox" name="availableSizes" value="L" />L</label>
+      <label><input type="checkbox" name="availableSizes" value="XL" />XL</label>
+      <label><input type="checkbox" name="availableSizes" value="XXL" />XXL</label>
+      <label><input type="checkbox" name="availableSizes" value="XXXL" />XXXL</label>
+    </div>
 
-            const container = document.getElementById('productContainer');
-            container.innerHTML = products?.map(product => `
-                <div class="card">
-                    <img src="${product.image}" alt="${product.title}">
-                    <h2>${product.title}</h2>
-                    <div class="price">$${product.price.toFixed(2)}</div>
-                    <div class="rating">Rating: ${product.rating?.rate} (${product.rating?.count} reviews)</div>
-                    <p>${product.description.slice(0, 100)}...</p>
-                </div>
-            `).join('');
-        } catch (err) {
-            console.error(err);
-        }
+    <label>Delivery Type:</label>
+    <select name="deliveryType">
+      <option value="HOME">HOME</option>
+      <option value="ON_ARRIVAL">ON_ARRIVAL</option>
+    </select>
+
+    <label>Category:</label>
+    <select name="categoryId" id="categorySelect"></select>
+
+    <label>Country:</label>
+    <select id="countrySelect" multiple></select>
+
+    <label>Season (Select after selecting country):</label>
+    <select id="seasonSelect" multiple></select>
+
+    <input type="submit" value="Add Product" />
+  </form>
+
+  <script>
+    const BASEURL = 'http://localhost:8080';
+
+    async function fetchCategories() {
+      const res = await fetch(`${BASEURL}/categories`);
+      const data = await res.json();
+      const select = document.getElementById('categorySelect');
+      data.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        select.appendChild(option);
+      });
     }
 
-    fetchProducts();
-</script>
+    async function fetchCountries() {
+      const res = await fetch(`${BASEURL}/countries`);
+      const data = await res.json();
+      const select = document.getElementById('countrySelect');
+      data.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country.id;
+        option.textContent = country.name;
+        select.appendChild(option);
+      });
+    }
 
+    document.getElementById('countrySelect').addEventListener('change', async () => {
+      const seasonSelect = document.getElementById('seasonSelect');
+      seasonSelect.innerHTML = '';
+
+      const selected = Array.from(document.getElementById('countrySelect').selectedOptions).map(o => o.value);
+      for (const countryId of selected) {
+        const res = await fetch(`${BASEURL}/seasons/${countryId}`);
+        const data = await res.json();
+        data.seasons.forEach(season => {
+          const option = document.createElement('option');
+          option.value = season.id;
+          option.textContent = `${season.season} (${countryId})`;
+          seasonSelect.appendChild(option);
+        });
+      }
+    });
+
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      const availableSizes = formData.getAll('availableSizes');
+      const countryIds = Array.from(document.getElementById('countrySelect').selectedOptions).map(o => o.value);
+      const seasonIds = Array.from(document.getElementById('seasonSelect').selectedOptions).map(o => o.value);
+
+      const body = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        imageUrl: formData.get('imageUrl'),
+        price: parseFloat(formData.get('price')),
+        availableSizes,
+        gender: formData.get('gender'),
+        categoryId: formData.get('categoryId'),
+        deliveryType: formData.get('deliveryType'),
+        type: 'Clothing',
+        countryIds,
+        seasonIds,
+      };
+
+      const res = await fetch(`${BASEURL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        alert('Product added successfully!');
+        form.reset();
+      } else {
+        alert('Failed to add product.');
+      }
+    });
+
+    fetchCategories();
+    fetchCountries();
+  </script>
 </body>
 </html>

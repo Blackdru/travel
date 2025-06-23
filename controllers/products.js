@@ -55,12 +55,18 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-
-// Get products with filters
 exports.getProducts = async (req, res) => {
-  const { categoryId, gender, deliveryType, countryId, seasonId, type } = req.query;
+  let { categoryId, gender, deliveryType, countryId, seasonId, type } = req.query;
 
   try {
+    // Clean invalid query params
+    categoryId = typeof categoryId === 'string' && categoryId.trim() !== '' ? categoryId : undefined;
+    gender = typeof gender === 'string' && gender.trim() !== '' ? gender : undefined;
+    deliveryType = typeof deliveryType === 'string' && deliveryType.trim() !== '' ? deliveryType : undefined;
+    type = typeof type === 'string' && type.trim() !== '' ? type : undefined;
+    countryId = typeof countryId === 'string' && countryId.trim() !== '' ? countryId : undefined;
+    seasonId = typeof seasonId === 'string' && seasonId.trim() !== '' ? seasonId : undefined;
+
     const products = await prisma.product.findMany({
       where: {
         ...(categoryId && { categoryId }),
@@ -87,6 +93,36 @@ exports.getProducts = async (req, res) => {
 
     res.json(products);
   } catch (err) {
+    console.error('Get products error:', err);
     res.status(500).json({ error: 'Failed to fetch products', details: err.message });
+  }
+};
+
+
+exports.getProductById = async (req, res) => {
+  const { productId } = req.params;
+
+  if (!productId || typeof productId !== 'string') {
+    return res.status(400).json({ error: 'Invalid product ID' });
+  }
+
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        category: true,
+        countries: true,
+        seasons: true
+      }
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    res.json(product);
+  } catch (err) {
+    console.error('Get product by ID error:', err);
+    res.status(500).json({ error: 'Failed to fetch product', details: err.message });
   }
 };
