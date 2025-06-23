@@ -17,7 +17,6 @@ model Country {
   capital  String
   seasons   Season[]
   product  Product[]
-  categories Category[]
   createdAt DateTime @default(now())
 }
 
@@ -28,7 +27,6 @@ model Season {
   start    String
   end      String
   products Product[]
-  categories Category[]
   country Country @relation(fields: [countryId], references: [id])
 
   createdAt DateTime @default(now()) 
@@ -48,13 +46,8 @@ enum SeasonType {
 
 model Category {
   id        String   @id @default(cuid())
-  name      String   // e.g., Casual, Formal
-  gender    Gender   // enum: MALE, FEMALE, KIDS
-  countryId String
-  seasonId  String
+  name      String   // e.g., Casual, Formal, Electronics, Books, etc.
   products Product[]
-  country   Country  @relation(fields: [countryId], references: [id])
-  season    Season   @relation(fields: [seasonId], references: [id])
   createdAt DateTime @default(now())
 }
 

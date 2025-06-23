@@ -16,6 +16,12 @@ exports.createProduct = async (req, res) => {
     seasonIds   // array of season IDs
   } = req.body;
 
+  // Log incoming data for debugging
+  console.log('Request body:', req.body);
+  console.log('categoryId type:', typeof categoryId, 'value:', categoryId);
+  console.log('countryIds:', countryIds);
+  console.log('seasonIds:', seasonIds);
+
   try {
     const product = await prisma.product.create({
       data: {
@@ -29,13 +35,14 @@ exports.createProduct = async (req, res) => {
         deliveryType,
         type,
         countries: {
-          connect: countryIds?.map(id => ({ id }))
+          connect: countryIds?.map(id => ({ id: String(id) }))
         },
         seasons: {
-          connect: seasonIds?.map(id => ({ id }))
+          connect: seasonIds?.map(id => ({ id: String(id) }))
         }
       },
       include: {
+        category: true,
         countries: true,
         seasons: true
       }
@@ -43,6 +50,7 @@ exports.createProduct = async (req, res) => {
 
     res.status(201).json(product);
   } catch (err) {
+    console.error('Create product error:', err);
     res.status(500).json({ error: 'Failed to create product', details: err.message });
   }
 };
@@ -55,22 +63,23 @@ exports.getProducts = async (req, res) => {
   try {
     const products = await prisma.product.findMany({
       where: {
-        ...(categoryId && { categoryId: parseInt(categoryId) }),
+        ...(categoryId && { categoryId }),
         ...(gender && { gender }),
         ...(deliveryType && { deliveryType }),
         ...(type && { type }),
         ...(countryId && {
           countries: {
-            some: { id: parseInt(countryId) }
+            some: { id: countryId }
           }
         }),
         ...(seasonId && {
           seasons: {
-            some: { id: parseInt(seasonId) }
+            some: { id: seasonId }
           }
         })
       },
       include: {
+        category: true,
         countries: true,
         seasons: true
       }

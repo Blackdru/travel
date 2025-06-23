@@ -13,6 +13,8 @@ exports.getTrendingGlobal = async (req, res) => {
       },
       include: {
         category: true,
+        countries: true,
+        seasons: true,
         reviews: true
       }
     });
@@ -30,8 +32,10 @@ exports.getTrendingByCountry = async (req, res) => {
   try {
     const trending = await prisma.product.findMany({
       where: {
-        category: {
-          countryId: countryId
+        countries: {
+          some: {
+            id: countryId
+          }
         }
       },
       take: 10,
@@ -42,6 +46,8 @@ exports.getTrendingByCountry = async (req, res) => {
       },
       include: {
         category: true,
+        countries: true,
+        seasons: true,
         reviews: true
       }
     });

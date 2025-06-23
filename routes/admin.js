@@ -131,6 +131,8 @@ router.get('/products', async (req, res) => {
     const products = await prisma.product.findMany({
       include: {
         category: true,
+        countries: true,
+        seasons: true,
         _count: {
           select: {
             orderItems: true,
@@ -154,6 +156,8 @@ router.get('/products/:id', async (req, res) => {
       where: { id: req.params.id },
       include: {
         category: true,
+        countries: true,
+        seasons: true,
         reviews: {
           include: {
             user: {
@@ -192,7 +196,19 @@ router.get('/products/:id', async (req, res) => {
 
 // Update product
 router.put('/products/:id', async (req, res) => {
-  const { name, description, imageUrl, price, availableSizes, gender, categoryId, deliveryType } = req.body;
+  const { 
+    name, 
+    description, 
+    imageUrl, 
+    price, 
+    availableSizes, 
+    gender, 
+    categoryId, 
+    deliveryType, 
+    type,
+    countryIds, // array of country IDs
+    seasonIds   // array of season IDs
+  } = req.body;
   
   try {
     const updated = await prisma.product.update({
@@ -205,10 +221,27 @@ router.put('/products/:id', async (req, res) => {
         ...(availableSizes && { availableSizes }),
         ...(gender && { gender }),
         ...(categoryId && { categoryId }),
-        ...(deliveryType && { deliveryType })
+        ...(deliveryType && { deliveryType }),
+        ...(type && { type }),
+        // Update countries relationship
+        ...(countryIds && {
+          countries: {
+            set: [], // Clear existing relationships
+            connect: countryIds.map(id => ({ id }))
+          }
+        }),
+        // Update seasons relationship
+        ...(seasonIds && {
+          seasons: {
+            set: [], // Clear existing relationships
+            connect: seasonIds.map(id => ({ id }))
+          }
+        })
       },
       include: {
-        category: true
+        category: true,
+        countries: true,
+        seasons: true
       }
     });
     res.json(updated);
