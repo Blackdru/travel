@@ -184,5 +184,93 @@
     fetchCategories();
     fetchCountries();
   </script>
+
+  <hr style="margin:40px 0;">
+  <h1>View Product & Reviews</h1>
+  <div style="max-width:600px;margin:0 auto;">
+    <label>Product ID: <input type="text" id="viewProductId" style="width:300px;" /></label>
+    <button id="fetchProductBtn">Fetch Product</button>
+    <div id="productDetails" style="margin-top:30px;"></div>
+    <div id="reviewsSection" style="margin-top:30px;"></div>
+    <div id="addReviewSection" style="margin-top:30px;display:none;">
+      <h3>Add a Review</h3>
+      <form id="reviewForm">
+        <label>Rating:
+          <select name="rating" required>
+            <option value="">Select</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </label><br>
+        <label>Comment:<br>
+          <textarea name="comment" rows="3" style="width:100%;"></textarea>
+        </label><br>
+        <label>User ID: <input type="text" name="userId" required /></label><br>
+        <input type="submit" value="Submit Review" />
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // --- Product View & Reviews ---
+    document.getElementById('fetchProductBtn').onclick = async function() {
+      const productId = document.getElementById('viewProductId').value.trim();
+      if (!productId) return alert('Enter a product ID');
+      const res = await fetch(`${BASEURL}/products/${productId}`);
+      if (!res.ok) return alert('Product not found');
+      const product = await res.json();
+      let html = `<h2>${product.name}</h2>`;
+      html += `<img src="${product.imageUrl}" alt="Image" style="max-width:200px;"><br>`;
+      html += `<b>Price:</b> ${product.price}<br>`;
+      html += `<b>Description:</b> ${product.description}<br>`;
+      html += `<b>Category:</b> ${product.category?.name || ''}<br>`;
+      html += `<b>Available Sizes:</b> ${(product.availableSizes||[]).join(', ')}<br>`;
+      html += `<b>Gender:</b> ${product.gender}<br>`;
+      html += `<b>Delivery Type:</b> ${product.deliveryType}<br>`;
+      document.getElementById('productDetails').innerHTML = html;
+      // Reviews
+      let reviewsHtml = '<h3>Reviews</h3>';
+      if (product.reviews && product.reviews.length > 0) {
+        reviewsHtml += '<ul>';
+        for (const r of product.reviews) {
+          reviewsHtml += `<li><b>Rating:</b> ${r.rating} | <b>User:</b> ${r.user?.name || r.user?.email || 'Unknown'}<br>${r.comment||''}</li>`;
+        }
+        reviewsHtml += '</ul>';
+      } else {
+        reviewsHtml += '<i>No reviews yet.</i>';
+      }
+      document.getElementById('reviewsSection').innerHTML = reviewsHtml;
+      document.getElementById('addReviewSection').style.display = 'block';
+      // Store productId for review form
+      document.getElementById('reviewForm').dataset.productId = productId;
+    };
+    document.getElementById('reviewForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const productId = e.target.dataset.productId;
+      const formData = new FormData(e.target);
+      const body = {
+        rating: parseInt(formData.get('rating')),
+        comment: formData.get('comment'),
+        userId: formData.get('userId')
+      };
+      const body2 = { ...body, productId };
+      const res = await fetch(`${BASEURL}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body2)
+      });
+      if (res.ok) {
+        alert('Review added!');
+        document.getElementById('fetchProductBtn').click(); // Refresh product view
+        e.target.reset();
+      } else {
+        const err = await res.json();
+        alert('Failed to add review: ' + (err.error || ''));
+      }
+    };
+  </script>
 </body>
 </html>

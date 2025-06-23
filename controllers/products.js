@@ -55,6 +55,7 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+
 exports.getProducts = async (req, res) => {
   let { categoryId, gender, deliveryType, countryId, seasonId, type } = req.query;
 
@@ -112,7 +113,14 @@ exports.getProductById = async (req, res) => {
       include: {
         category: true,
         countries: true,
-        seasons: true
+        seasons: true,
+        reviews: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        }
       }
     });
 
